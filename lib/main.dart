@@ -1,8 +1,16 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:time_timer/presentation/timer.dart';
 import 'package:flutter_material_color_picker/flutter_material_color_picker.dart';
+import 'package:screen/screen.dart';
 
-void main() => runApp(MyApp());
+void main() {
+  // Prevent screen from going into sleep mode:
+  Screen.keepOn(true);
+
+  runApp(MyApp());
+}
 
 class MyApp extends StatelessWidget {
   @override
@@ -39,32 +47,37 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
       ),
       body: Center(
-        child: Column(
-          children: <Widget>[
-            Expanded(child: Container(),),
-            TimeTimer(
-              radius: MediaQuery.of(context).size.width - 25,
-              seconds: 60,
-              color: this._selectedColor,
-              isActive: this._isActive,
-              onDrag: (seconds) {
+        child: OrientationBuilder(builder: (context, orientation) =>
+          Flex(
+            direction: orientation == Orientation.portrait ? Axis.vertical : Axis.horizontal,
+            children: <Widget>[
+              Expanded(child: Container(),),
+              TimeTimer(
+                  radius: min(size.width, size.height) - 25,
+                  seconds: 60,
+                  color: this._selectedColor,
+                  isActive: this._isActive,
+                  onDrag: (seconds) {
 
-              }
-            ),
-            Padding(
-              padding: EdgeInsets.only(top: 20.0),
-              child: FloatingActionButton(
-                child: Icon(this._isActive ? Icons.pause : Icons.play_arrow),
-                onPressed: toggleTimer,
+                  }
               ),
-            ),
-            Expanded(child: Container(),)
-          ],
+              Padding(
+                padding: EdgeInsets.only(top: 20.0),
+                child: FloatingActionButton(
+                  child: Icon(this._isActive ? Icons.pause : Icons.play_arrow),
+                  onPressed: toggleTimer,
+                ),
+              ),
+              Expanded(child: Container(),)
+            ],
+          )
         )
       ),
       floatingActionButton: FloatingActionButton(
