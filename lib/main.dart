@@ -1,14 +1,14 @@
 import 'dart:math';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:time_timer/presentation/timer.dart';
 import 'package:flutter_material_color_picker/flutter_material_color_picker.dart';
 import 'package:screen/screen.dart';
+import 'package:vibration/vibration.dart';
+import 'package:audioplayers/audio_cache.dart';
 
 void main() {
-  // Prevent screen from going into sleep mode:
-  Screen.keepOn(true);
-
   runApp(MyApp());
 }
 
@@ -39,10 +39,15 @@ class _MyHomePageState extends State<MyHomePage> {
 
   bool _isActive;
 
+  double _seconds;
+
+  static AudioCache player = new AudioCache();
+
   @override
   void initState() {
     super.initState();
     this._isActive = false;
+    this._seconds = 1500;
   }
 
   @override
@@ -60,13 +65,13 @@ class _MyHomePageState extends State<MyHomePage> {
             children: <Widget>[
               Expanded(child: Container(),),
               TimeTimer(
-                  radius: min(size.width, size.height) - 25,
-                  seconds: 60,
-                  color: this._selectedColor,
-                  isActive: this._isActive,
-                  onDrag: (seconds) {
-
-                  }
+                radius: min(size.width, size.height) - 25,
+                seconds: this._seconds,
+                color: this._selectedColor,
+                isActive: this._isActive,
+                onDrag: updateSeconds,
+                tick: updateSeconds,
+                onEnd: onEnd,
               ),
               Padding(
                 padding: EdgeInsets.only(top: 20.0),
@@ -99,9 +104,31 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  toggleTimer() {
+  playAlram() async {
+    await player.play('beeps_notification.mp3');
+  }
+
+  updateSeconds(seconds) {
+    setState(() => this._seconds = seconds);
+  }
+
+  onEnd() async {
+    toggleTimer(force: false);
+    if (await Vibration.hasVibrator())
+    {
+      playAlram();
+      Vibration.vibrate(pattern: [300, 500, 300, 500, 300]);
+    }
+  }
+
+  toggleTimer({ bool force }) {
+    if (!this._isActive && this._seconds <= 0) return;
+
     setState(() {
-      this._isActive = !this._isActive;
+      if (force != null) this._isActive = force;
+      else this._isActive = !this._isActive;
+
+      Screen.keepOn(this._isActive);
     });
   }
 }
