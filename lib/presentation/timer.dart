@@ -12,6 +12,9 @@ class TimeTimer extends StatefulWidget {
   final bool isActive;
 
   final Function onDrag;
+  final Function onEnd;
+  final Function tick;
+
   final Widget child;
 
   final double radius;
@@ -22,7 +25,9 @@ class TimeTimer extends StatefulWidget {
     @required this.seconds,
     this.isActive = false,
     this.radius = 300,
-    this.onDrag ,
+    this.onDrag,
+    this.onEnd,
+    this.tick,
     this.child,
     this.color
   });
@@ -57,7 +62,12 @@ class _TimeTimerState extends State<TimeTimer> {
   tick(Timer t) {
     if (!widget.isActive) return;
 
-//    debugPrint((angleToSeconds(this._angle)).toString());
+    final seconds = angleToSeconds(this._angle);
+
+    if (widget.tick != null) widget.tick(seconds);
+    if (seconds <= 0 && widget.onEnd != null) widget.onEnd();
+
+    debugPrint((angleToSeconds(this._angle)).toString());
     setState(() {
       _angle -= 0.6 * (pi / 180);
     });
