@@ -209,7 +209,6 @@ class BasePainter extends CustomPainter {
     final height = size.height - 80;
 
     final radius = min(width, height) / 2;
-    debugPrint(size.toString());
     final radian = 6 * (pi / 180);
 
     final center = Offset(size.width / 2, size.height / 2);
