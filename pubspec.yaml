@@ -23,6 +23,7 @@ dependencies:
   screen: ^0.0.5
   vibration: 1.0.2
   audioplayers: ^0.11.0
+  font_awesome_flutter: ^8.4.0
 
 dev_dependencies:
   flutter_test:
@@ -73,3 +74,7 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.io/custom-fonts/#from-packages
+  fonts:
+      - family: Consolas
+        fonts:
+          - asset: assets/fonts/consola.ttf
