@@ -19,6 +19,8 @@ class TimeTimerPainter extends StatefulWidget {
 
   final TimerDirection direction;
 
+  final bool isNumberVisible;
+
 
   TimeTimerPainter({
     this.angle,
@@ -26,7 +28,8 @@ class TimeTimerPainter extends StatefulWidget {
     this.onDrag,
     this.child,
     this.color = Colors.red,
-    this.direction = TimerDirection.CLOCKWISE
+    this.direction = TimerDirection.CLOCKWISE,
+    this.isNumberVisible = true
   });
 
   @override
@@ -47,7 +50,6 @@ class _TimeTimerPainterState extends State<TimeTimerPainter> {
 
   GlobalKey globalKey;
 
-
   @override
   void initState() {
     super.initState();
@@ -60,6 +62,7 @@ class _TimeTimerPainterState extends State<TimeTimerPainter> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.angle != widget.angle ||
         oldWidget.color != widget.color ||
+        oldWidget.isNumberVisible != widget.isNumberVisible ||
         oldWidget.direction != widget.direction
     ) {
       _calculate();
@@ -74,7 +77,7 @@ class _TimeTimerPainterState extends State<TimeTimerPainter> {
       onPanEnd: _onPanEnd,
       key: globalKey,
       child: CustomPaint(
-        painter: BasePainter(direction: widget.direction),
+        painter: BasePainter(direction: widget.direction, isNumberVisible: widget.isNumberVisible),
         foregroundPainter: _painter,
         child: Padding(
           padding: const EdgeInsets.all(12.0),
@@ -98,8 +101,9 @@ class _TimeTimerPainterState extends State<TimeTimerPainter> {
     this._angle = angle;
 
     _painter = DrawTimer(
-        color: widget.color,
-        angle: widget.direction != TimerDirection.COUNTER_CLOCKWISE ? -this._angle : this._angle
+      color: widget.color,
+      angle: widget.direction != TimerDirection.COUNTER_CLOCKWISE ? -this._angle : this._angle,
+      isNumberVisible: widget.isNumberVisible
     );
   }
 
@@ -206,23 +210,26 @@ class BasePainter extends CustomPainter {
   final TimerDirection direction;
   final TextPainter textPainter;
   final TextStyle textStyle;
+  final bool isNumberVisible;
 
 
-  BasePainter({this.direction}) : textPainter = new TextPainter(
+  BasePainter({this.direction, this.isNumberVisible = true}) : textPainter = new TextPainter(
       textAlign: TextAlign.center,
       textDirection: TextDirection.rtl,
     ),
     textStyle = TextStyle(
       color: Colors.black,
       fontFamily: 'Arial',
-      fontSize: 27.5,
-      fontWeight: FontWeight.w500
+      fontSize: 24,
+      fontWeight: FontWeight.w300
     );
 
   @override
   void paint(Canvas canvas, Size size) {
-    final width = size.width - 80;
-    final height = size.height - 80;
+    final padding = isNumberVisible ? 80 : 20;
+
+    final width = size.width - padding;
+    final height = size.height - padding;
 
     final radius = min(width, height) / 2;
     final radian = 6 * (pi / 180);
@@ -231,7 +238,7 @@ class BasePainter extends CustomPainter {
 
     final transparentPainter = _getPaint(color: Colors.transparent, style: PaintingStyle.fill);
     final linePainter = _getPaint(color: Colors.black, width: 1.0, style: PaintingStyle.fill);
-    final boldLinePainter = _getPaint(color: Colors.black, width: 3.0, style: PaintingStyle.fill);
+    final boldLinePainter = _getPaint(color: Colors.black, width: 2.0, style: PaintingStyle.fill);
 
     canvas.save();
     canvas.translate(center.dx, center.dy);
@@ -240,18 +247,20 @@ class BasePainter extends CustomPainter {
       if (i % 5 == 0) {
         canvas.drawLine(Offset(0, -radius + 10), Offset(0, - radius), boldLinePainter);
 
-        canvas.save();
-        canvas.translate(0, -radius - 20);
-        canvas.rotate(-radian * i);
+        if (isNumberVisible) {
+          canvas.save();
+          canvas.translate(0, -radius - 20);
+          canvas.rotate(-radian * i);
 
-        final text = this.direction != TimerDirection.CLOCKWISE ? (i % 60).toInt().toString() : ((60 - i) % 60).toInt().toString();
 
-        textPainter.text = TextSpan(text: text, style: textStyle);
-        textPainter.layout();
-        textPainter.paint(canvas, new Offset(-(textPainter.width / 2), -(textPainter.height / 2)));
+          final text = this.direction != TimerDirection.CLOCKWISE ? (i % 60).toInt().toString() : ((60 - i) % 60).toInt().toString();
 
-        canvas.restore();
+          textPainter.text = TextSpan(text: text, style: textStyle);
+          textPainter.layout();
+          textPainter.paint(canvas, new Offset(-(textPainter.width / 2), -(textPainter.height / 2)));
 
+          canvas.restore();
+        }
       } else {
         canvas.drawLine(Offset(0, -radius + 9), Offset(0, -radius + 3),
             linePainter);
@@ -280,13 +289,16 @@ class BasePainter extends CustomPainter {
 class DrawTimer extends CustomPainter {
   final Color color;
   final double angle;
+  final bool isNumberVisible;
 
-  DrawTimer({this.color = Colors.green, this.angle = 0});
+  DrawTimer({this.color = Colors.green, this.angle = 0, this.isNumberVisible = true});
 
   @override
   void paint(Canvas canvas, Size size) {
-    final width = size.width - 100;
-    final height = size.height - 100;
+    final padding = isNumberVisible ? 100 : 40;
+
+    final width = size.width - padding;
+    final height = size.height - padding;
 
     final radius = min(width, height) / 2;
     final radian = angle * (pi / 180);

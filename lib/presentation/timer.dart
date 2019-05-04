@@ -27,6 +27,8 @@ class TimeTimer extends StatefulWidget {
 
   final TimerDirection direction;
 
+  final bool isNumberVisible;
+
   TimeTimer({
     @required this.seconds,
     this.isActive = false,
@@ -36,7 +38,8 @@ class TimeTimer extends StatefulWidget {
     this.tick,
     this.child,
     this.color,
-    this.direction = TimerDirection.CLOCKWISE
+    this.direction = TimerDirection.CLOCKWISE,
+    this.isNumberVisible = true
   });
 
   @override
@@ -72,7 +75,10 @@ class _TimeTimerState extends State<TimeTimer> {
     final seconds = angleToSeconds(this._angle);
 
     if (widget.tick != null) widget.tick(seconds);
-    if (seconds <= 0 && widget.onEnd != null) widget.onEnd();
+
+    if (seconds <= 0 && widget.onEnd != null) {
+      widget.onEnd();
+    }
 
     debugPrint((angleToSeconds(this._angle)).toString());
     setState(() {
@@ -98,7 +104,8 @@ class _TimeTimerState extends State<TimeTimer> {
           });
         },
         angle: this._angle,
-        direction: widget.direction
+        direction: widget.direction,
+        isNumberVisible: widget.isNumberVisible
       )
     );
   }
