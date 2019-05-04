@@ -12,6 +12,9 @@ class ModalView extends StatefulWidget {
   final double minHeight;
   final double maxHeight;
 
+  final bool isStacked;
+  final bool isTitleVisible;
+
   static const double defaultTitleHeight = 50;
 
   ModalView({
@@ -23,6 +26,8 @@ class ModalView extends StatefulWidget {
     this.titleTextStyle,
     this.minHeight = defaultTitleHeight,
     this.maxHeight = double.infinity,
+    this.isStacked = true,
+    this.isTitleVisible = true,
   }) :  assert(child != null),
         assert(modalChild != null),
         assert(titleHeight >= 0),
@@ -39,13 +44,32 @@ class _ModalViewState extends State<ModalView> {
   double _height;
 
   @override
+  void didUpdateWidget(ModalView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.isTitleVisible != widget.isTitleVisible) {
+      calculateHeight();
+    }
+  }
+
+  @override
   void initState() {
     super.initState();
-    this._height = 50;
+    calculateHeight();
+  }
+
+  void calculateHeight() {
+    final height = widget.isTitleVisible ? widget.titleHeight : 0.0;
+    setModalHeight(height);
   }
 
   void setModalHeight(height) {
-    if (height < widget.minHeight || height > widget.maxHeight) return;
+    if (
+      (widget.isTitleVisible && (height < widget.minHeight || height > widget.maxHeight)) ||
+      (!widget.isTitleVisible && height < 0)
+    ) {
+      return;
+    }
+
     setState(() => this._height = height);
   }
 
@@ -55,7 +79,7 @@ class _ModalViewState extends State<ModalView> {
 
     return Stack(
       children: [
-        widget.child,
+        Padding(padding: EdgeInsets.only(bottom: widget.isStacked ? 0 : widget.titleHeight), child: widget.child),
         Align(
           alignment: Alignment.bottomCenter,
           child: GestureDetector(
@@ -64,7 +88,7 @@ class _ModalViewState extends State<ModalView> {
               setModalHeight(height);
             },
             child: Container(
-              width: size.width - 20,
+              width: size.width - 20 > 0 ? size.width - 20 : 0,
               height: this._height,
               decoration: BoxDecoration(
                 color: Colors.white,
