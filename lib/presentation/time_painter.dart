@@ -4,6 +4,8 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'dart:math';
 
+import 'package:time_timer/presentation/timer.dart';
+
 class TimeTimerPainter extends StatefulWidget {
   final double angle;
 
@@ -15,8 +17,17 @@ class TimeTimerPainter extends StatefulWidget {
 
   final Color color;
 
+  final TimerDirection direction;
 
-  TimeTimerPainter({ this.angle, this.isActive = false, this.onDrag , this.child, this.color = Colors.red });
+
+  TimeTimerPainter({
+    this.angle,
+    this.isActive = false,
+    this.onDrag,
+    this.child,
+    this.color = Colors.red,
+    this.direction = TimerDirection.CLOCKWISE
+  });
 
   @override
   _TimeTimerPainterState createState() => _TimeTimerPainterState();
@@ -44,12 +55,13 @@ class _TimeTimerPainterState extends State<TimeTimerPainter> {
     _calculate();
   }
 
-  // we need to update this widget both with gesture detector but
-  // also when the parent widget rebuilds itself
   @override
   void didUpdateWidget(TimeTimerPainter oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.angle != widget.angle || oldWidget.color != widget.color) {
+    if (oldWidget.angle != widget.angle ||
+        oldWidget.color != widget.color ||
+        oldWidget.direction != widget.direction
+    ) {
       _calculate();
     }
   }
@@ -62,7 +74,7 @@ class _TimeTimerPainterState extends State<TimeTimerPainter> {
       onPanEnd: _onPanEnd,
       key: globalKey,
       child: CustomPaint(
-        painter: BasePainter(),
+        painter: BasePainter(direction: widget.direction),
         foregroundPainter: _painter,
         child: Padding(
           padding: const EdgeInsets.all(12.0),
@@ -82,10 +94,13 @@ class _TimeTimerPainterState extends State<TimeTimerPainter> {
   }
 
   _calculate() {
-    double angle = _calculateAngle(widget.angle);
-
+    final angle = _calculateAngle(widget.angle);
     this._angle = angle;
-    _painter = DrawTimer(color: widget.color, angle: -this._angle);
+
+    _painter = DrawTimer(
+        color: widget.color,
+        angle: widget.direction != TimerDirection.COUNTER_CLOCKWISE ? -this._angle : this._angle
+    );
   }
 
   _onPanDown(DragDownDetails e) {
@@ -110,24 +125,24 @@ class _TimeTimerPainterState extends State<TimeTimerPainter> {
     var position = e.globalPosition;
 
     var vector = getVector(globalKey, position);
-    var dir = getRotationDirection(this.prev, vector);
+    var vectorDirection = getRotationDirection(this.prev, vector);
     var angle = getAngle(this.start, this.prev);
 
 //    debugPrint("CurrentAngle: ${_angle}, Angle: $angle, DIR: ${dir}");
 
     if (_testAngle.isNaN) _testAngle = 0;
 
-    _testAngle += (prevAngle - angle).abs() * (dir ? -1 : 1);
+    _testAngle += (prevAngle - angle).abs() * (!(vectorDirection ^ (widget.direction != TimerDirection.COUNTER_CLOCKWISE)) ? -1 : 1);
 
 //    debugPrint("$_testAngle");
 
 
-    if (startAngle + _testAngle < 0 && dir) {
+    if (startAngle + _testAngle < 0 && vectorDirection) {
       widget.onDrag(0.0);
       return;
     }
 
-    if (startAngle + _testAngle > 360 && !dir) {
+    if (startAngle + _testAngle > 360 && !vectorDirection) {
       widget.onDrag(360.0);
       return;
     }
@@ -188,11 +203,12 @@ class _TimeTimerPainterState extends State<TimeTimerPainter> {
 
 class BasePainter extends CustomPainter {
 
+  final TimerDirection direction;
   final TextPainter textPainter;
   final TextStyle textStyle;
 
 
-  BasePainter() :textPainter = new TextPainter(
+  BasePainter({this.direction}) : textPainter = new TextPainter(
       textAlign: TextAlign.center,
       textDirection: TextDirection.rtl,
     ),
@@ -228,7 +244,9 @@ class BasePainter extends CustomPainter {
         canvas.translate(0, -radius - 20);
         canvas.rotate(-radian * i);
 
-        textPainter.text = TextSpan(text: ((60 - i) % 60).toInt().toString(), style: textStyle);
+        final text = this.direction != TimerDirection.CLOCKWISE ? (i % 60).toInt().toString() : ((60 - i) % 60).toInt().toString();
+
+        textPainter.text = TextSpan(text: text, style: textStyle);
         textPainter.layout();
         textPainter.paint(canvas, new Offset(-(textPainter.width / 2), -(textPainter.height / 2)));
 
@@ -260,13 +278,10 @@ class BasePainter extends CustomPainter {
 }
 
 class DrawTimer extends CustomPainter {
-  Color color;
-  double angle;
+  final Color color;
+  final double angle;
 
-  DrawTimer({Color color = Colors.green, double angle = 0}) {
-    this.color = color;
-    this.angle = angle;
-  }
+  DrawTimer({this.color = Colors.green, this.angle = 0});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -288,14 +303,18 @@ class DrawTimer extends CustomPainter {
     path.addRRect(rrect);
     path.close();
 
-    canvas.drawArc(Rect.fromCircle(center: center, radius: radius), pi * 3 / 2, radian, true, circlePainter);
-
     canvas.save();
     canvas.translate(center.dx, center.dy);
+
+    canvas.drawArc(Rect.fromCircle(center: Offset.zero, radius: radius), pi * 3 / 2, radian, true, circlePainter);
+
+    canvas.save();
     canvas.rotate(radian);
 
     canvas.drawShadow(path, Colors.grey, 4.0, true);
     canvas.drawPath(path, innerCirclePainter);
+
+    canvas.restore();
 
     canvas.restore();
   }

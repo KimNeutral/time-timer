@@ -6,6 +6,10 @@ import 'package:flutter/material.dart';
 import './time_painter.dart';
 import './utils.dart';
 
+enum TimerDirection {
+  CLOCKWISE, COUNTER_CLOCKWISE
+}
+
 class TimeTimer extends StatefulWidget {
   final double seconds;
 
@@ -21,6 +25,8 @@ class TimeTimer extends StatefulWidget {
 
   final Color color;
 
+  final TimerDirection direction;
+
   TimeTimer({
     @required this.seconds,
     this.isActive = false,
@@ -29,7 +35,8 @@ class TimeTimer extends StatefulWidget {
     this.onEnd,
     this.tick,
     this.child,
-    this.color
+    this.color,
+    this.direction = TimerDirection.CLOCKWISE
   });
 
   @override
@@ -91,6 +98,7 @@ class _TimeTimerState extends State<TimeTimer> {
           });
         },
         angle: this._angle,
+        direction: widget.direction
       )
     );
   }
